@@ -72,6 +72,8 @@ When `ovc shift` is run without an output file, it uses your saved defaults and 
 
 Batch conversion continues when one file fails and prints a final success/failure summary.
 
+Batch conversion also writes a `report.csv` file in the output folder.
+
 The desktop interface includes `Play Input` and `Play Output` buttons for quick listening.
 
 Supported batch input formats:

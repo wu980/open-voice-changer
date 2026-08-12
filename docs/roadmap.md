@@ -61,6 +61,12 @@
 - Add desktop `Play Input`
 - Add desktop `Play Output`
 
+## v0.11 - Batch Reports
+
+- Write `report.csv` after batch conversion
+- Include success/failure status for every file
+- Include output path, error, preset, and semitones
+
 ## v1.0 - Stable Local Tool
 
 - Improve docs

@@ -16,6 +16,7 @@ from open_voice_changer.config import (
 from open_voice_changer.effects import preset_names
 from open_voice_changer.history import record_history
 from open_voice_changer.player import open_audio
+from open_voice_changer.reports import write_batch_report
 
 
 class VoiceChangerApp(ctk.CTk):
@@ -254,18 +255,27 @@ class VoiceChangerApp(ctk.CTk):
                     f"Batch finished: {result.success_count} succeeded, "
                     f"{result.failure_count} failed."
                 )
+                report_path = write_batch_report(
+                    result=result,
+                    output_dir=output_file,
+                    preset=self.preset.get(),
+                    semitones=self.semitones.get(),
+                )
                 self.last_output_path = Path(output_file)
                 self.progress_bar.set(1)
-                self.status.set(message)
+                self.status.set(f"{message} Report: {report_path.name}")
                 self.open_output_button.configure(state="normal")
                 self.play_output_button.configure(state="disabled")
                 if result.failure_count:
                     failures = "\n".join(
                         f"- {item.input_path.name}: {item.error}" for item in result.failed[:5]
                     )
-                    messagebox.showwarning("Batch completed with errors", f"{message}\n\n{failures}")
+                    messagebox.showwarning(
+                        "Batch completed with errors",
+                        f"{message}\nReport: {report_path}\n\n{failures}",
+                    )
                 else:
-                    messagebox.showinfo("Done", message)
+                    messagebox.showinfo("Done", f"{message}\nReport: {report_path}")
                 return
 
             result = convert_pitch(

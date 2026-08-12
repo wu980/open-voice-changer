@@ -17,6 +17,7 @@ from open_voice_changer.demo import create_demo_outputs
 from open_voice_changer.effects import preset_names
 from open_voice_changer.history import read_history, record_history
 from open_voice_changer.player import open_audio
+from open_voice_changer.reports import write_batch_report
 
 
 @click.group()
@@ -159,6 +160,13 @@ def batch(
         f"Batch finished: {result.success_count} succeeded, "
         f"{result.failure_count} failed, {result.total_count} total."
     )
+    report_path = write_batch_report(
+        result=result,
+        output_dir=output_dir,
+        preset=actual_preset,
+        semitones=actual_semitones,
+    )
+    click.echo(f"Report saved: {report_path}")
 
 
 @main.command("demo")
