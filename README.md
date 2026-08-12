@@ -29,14 +29,25 @@ Desktop interface:
 ovc-ui
 ```
 
+In the desktop interface, turn on `Batch folder mode` to convert every supported audio file in a folder.
+
 Command line:
 
 ```powershell
 ovc shift input.wav outputs\voice-high.wav --semitones 4
 ovc shift input.wav outputs\voice-low.wav --semitones -3
+ovc batch samples outputs --semitones 4
 ```
 
 `--semitones` controls pitch. Positive values sound higher, negative values sound lower.
+
+Supported batch input formats:
+
+- `.wav`
+- `.mp3`
+- `.flac`
+- `.ogg`
+- `.m4a`
 
 ## Project Goals
 

@@ -17,6 +17,7 @@
 
 - Convert multiple files in a folder
 - Save outputs to a chosen directory
+- Show conversion progress in the desktop interface
 
 ## v0.4 - Optional Model Backends
 
