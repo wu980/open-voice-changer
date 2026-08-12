@@ -73,6 +73,13 @@
 - Log conversion results and errors
 - Add `ovc config log-path`
 
+## v0.13 - Project Quality
+
+- Add Ruff lint configuration
+- Add GitHub Actions CI
+- Add contributing guide
+- Clean development installation docs
+
 ## v1.0 - Stable Local Tool
 
 - Improve docs

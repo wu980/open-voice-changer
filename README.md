@@ -17,8 +17,14 @@ The first version focuses on offline audio file conversion. Future versions may 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-pip install -e .
+python -m pip install -e ".[dev]"
+```
+
+Run checks:
+
+```powershell
+python -m ruff check .
+python -m pytest
 ```
 
 ## Usage
@@ -105,3 +111,7 @@ Do not use this project to impersonate real people without consent. Users are re
 ## Roadmap
 
 See [docs/roadmap.md](docs/roadmap.md).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
