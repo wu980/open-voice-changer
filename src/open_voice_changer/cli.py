@@ -4,6 +4,7 @@ import click
 
 from open_voice_changer.audio import convert_pitch
 from open_voice_changer.batch import convert_directory
+from open_voice_changer.demo import create_demo_outputs
 from open_voice_changer.effects import preset_names
 
 
@@ -115,6 +116,23 @@ def batch(
         on_progress=show_progress,
     )
     click.echo(f"Converted {len(results)} file(s).")
+
+
+@main.command("demo")
+@click.option(
+    "--output-dir",
+    "-o",
+    default=Path("outputs") / "demo",
+    show_default=True,
+    type=click.Path(file_okay=False, path_type=Path),
+    help="Directory for generated demo audio files.",
+)
+def demo(output_dir: Path) -> None:
+    """Generate demo audio and example outputs for every preset."""
+    results = create_demo_outputs(output_dir=output_dir)
+    click.echo("Generated demo files:")
+    for result in results:
+        click.echo(f"- {result}")
 
 
 if __name__ == "__main__":

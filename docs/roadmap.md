@@ -30,6 +30,12 @@
 - Support presets in the command line interface
 - Support presets in the desktop interface
 
+## v0.6 - Demo Workflow
+
+- Generate a synthetic demo audio file
+- Export demo outputs for every preset
+- Document a quick demo command for new users
+
 ## v1.0 - Stable Local Tool
 
 - Improve docs

@@ -23,6 +23,14 @@ pip install -e .
 
 ## Usage
 
+Quick demo:
+
+```powershell
+ovc demo
+```
+
+This creates a synthetic demo input and preset examples in `outputs\demo`.
+
 Desktop interface:
 
 ```powershell
