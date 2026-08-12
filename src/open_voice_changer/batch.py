@@ -30,6 +30,7 @@ def convert_batch(
     output_dir: str | Path,
     semitones: float,
     sample_rate: int | None = None,
+    preset: str = "clean",
     on_progress: Callable[[int, int, Path], None] | None = None,
 ) -> list[Path]:
     files = [Path(path) for path in input_files]
@@ -49,6 +50,7 @@ def convert_batch(
             output_path=output_file,
             semitones=semitones,
             sample_rate=sample_rate,
+            preset=preset,
         )
         results.append(result)
 
@@ -63,6 +65,7 @@ def convert_directory(
     output_dir: str | Path,
     semitones: float,
     sample_rate: int | None = None,
+    preset: str = "clean",
     on_progress: Callable[[int, int, Path], None] | None = None,
 ) -> list[Path]:
     files = find_audio_files(input_dir)
@@ -71,5 +74,6 @@ def convert_directory(
         output_dir=output_dir,
         semitones=semitones,
         sample_rate=sample_rate,
+        preset=preset,
         on_progress=on_progress,
     )

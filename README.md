@@ -33,12 +33,20 @@ In the desktop interface, turn on `Batch folder mode` to convert every supported
 
 The desktop interface also shows conversion progress and can open the output folder after conversion.
 
+Available presets:
+
+- `clean`
+- `deep`
+- `bright`
+- `robot`
+- `radio`
+
 Command line:
 
 ```powershell
-ovc shift input.wav outputs\voice-high.wav --semitones 4
-ovc shift input.wav outputs\voice-low.wav --semitones -3
-ovc batch samples outputs --semitones 4
+ovc shift input.wav outputs\voice-high.wav --semitones 4 --preset bright
+ovc shift input.wav outputs\voice-low.wav --semitones -3 --preset deep
+ovc batch samples outputs --semitones 4 --preset radio
 ```
 
 `--semitones` controls pitch. Positive values sound higher, negative values sound lower.

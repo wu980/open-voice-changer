@@ -4,6 +4,7 @@ import click
 
 from open_voice_changer.audio import convert_pitch
 from open_voice_changer.batch import convert_directory
+from open_voice_changer.effects import preset_names
 
 
 @click.group()
@@ -35,11 +36,20 @@ def main() -> None:
     type=int,
     help="Optional target sample rate, for example 44100.",
 )
+@click.option(
+    "--preset",
+    "-p",
+    default="clean",
+    show_default=True,
+    type=click.Choice(preset_names(), case_sensitive=False),
+    help="Voice effect preset.",
+)
 def shift(
     input_file: Path,
     output_file: Path,
     semitones: float,
     sample_rate: int | None,
+    preset: str,
 ) -> None:
     """Shift the pitch of INPUT_FILE and save OUTPUT_FILE."""
     result = convert_pitch(
@@ -47,6 +57,7 @@ def shift(
         output_path=output_file,
         semitones=semitones,
         sample_rate=sample_rate,
+        preset=preset,
     )
     click.echo(f"Saved converted audio: {result}")
 
@@ -75,11 +86,20 @@ def shift(
     type=int,
     help="Optional target sample rate, for example 44100.",
 )
+@click.option(
+    "--preset",
+    "-p",
+    default="clean",
+    show_default=True,
+    type=click.Choice(preset_names(), case_sensitive=False),
+    help="Voice effect preset for every audio file.",
+)
 def batch(
     input_dir: Path,
     output_dir: Path,
     semitones: float,
     sample_rate: int | None,
+    preset: str,
 ) -> None:
     """Convert all supported audio files in INPUT_DIR."""
 
@@ -91,6 +111,7 @@ def batch(
         output_dir=output_dir,
         semitones=semitones,
         sample_rate=sample_rate,
+        preset=preset,
         on_progress=show_progress,
     )
     click.echo(f"Converted {len(results)} file(s).")

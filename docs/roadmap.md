@@ -24,6 +24,12 @@
 - Let users configure their own local model files
 - Do not bundle unauthorized voice models
 
+## v0.5 - Effect Presets
+
+- Add clean, deep, bright, robot, and radio presets
+- Support presets in the command line interface
+- Support presets in the desktop interface
+
 ## v1.0 - Stable Local Tool
 
 - Improve docs

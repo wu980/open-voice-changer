@@ -4,6 +4,8 @@ import librosa
 import numpy as np
 import soundfile as sf
 
+from open_voice_changer.effects import apply_preset
+
 
 def load_audio(path: str | Path, sample_rate: int | None = None) -> tuple[np.ndarray, int]:
     """Load an audio file as mono floating-point samples."""
@@ -40,9 +42,11 @@ def convert_pitch(
     output_path: str | Path,
     semitones: float,
     sample_rate: int | None = None,
+    preset: str = "clean",
 ) -> Path:
-    """Load an audio file, shift pitch, and write the converted file."""
+    """Load an audio file, shift pitch, apply a preset, and write the converted file."""
     samples, sr = load_audio(input_path, sample_rate=sample_rate)
     shifted = pitch_shift(samples, sr, semitones)
-    save_audio(output_path, shifted, sr)
+    processed = apply_preset(shifted, sr, preset=preset)
+    save_audio(output_path, processed, sr)
     return Path(output_path)

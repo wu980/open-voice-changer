@@ -6,6 +6,7 @@ import customtkinter as ctk
 
 from open_voice_changer.audio import convert_pitch
 from open_voice_changer.batch import convert_directory
+from open_voice_changer.effects import preset_names
 
 
 class VoiceChangerApp(ctk.CTk):
@@ -23,6 +24,7 @@ class VoiceChangerApp(ctk.CTk):
         self.output_path = ctk.StringVar(value=str(Path("outputs") / "converted.wav"))
         self.batch_mode = ctk.BooleanVar(value=False)
         self.semitones = ctk.DoubleVar(value=0.0)
+        self.preset = ctk.StringVar(value="clean")
         self.status = ctk.StringVar(value="Ready")
         self.last_output_path: Path | None = None
 
@@ -82,9 +84,17 @@ class VoiceChangerApp(ctk.CTk):
         self.pitch_label = ctk.CTkLabel(self, text="0.0")
         self.pitch_label.grid(row=4, column=2, padx=(8, 24), pady=8)
 
+        ctk.CTkLabel(self, text="Preset").grid(row=5, column=0, padx=24, pady=8, sticky="w")
+        preset_menu = ctk.CTkOptionMenu(
+            self,
+            values=preset_names(),
+            variable=self.preset,
+        )
+        preset_menu.grid(row=5, column=1, padx=8, pady=8, sticky="ew")
+
         self.progress_bar = ctk.CTkProgressBar(self)
         self.progress_bar.set(0)
-        self.progress_bar.grid(row=5, column=1, padx=8, pady=(20, 4), sticky="ew")
+        self.progress_bar.grid(row=6, column=1, padx=8, pady=(20, 4), sticky="ew")
 
         self.convert_button = ctk.CTkButton(
             self,
@@ -92,7 +102,7 @@ class VoiceChangerApp(ctk.CTk):
             height=40,
             command=self._convert,
         )
-        self.convert_button.grid(row=6, column=1, padx=8, pady=(12, 8), sticky="ew")
+        self.convert_button.grid(row=7, column=1, padx=8, pady=(12, 8), sticky="ew")
 
         self.open_output_button = ctk.CTkButton(
             self,
@@ -101,10 +111,10 @@ class VoiceChangerApp(ctk.CTk):
             state="disabled",
             command=self._open_output_location,
         )
-        self.open_output_button.grid(row=6, column=2, padx=(8, 24), pady=(12, 8), sticky="ew")
+        self.open_output_button.grid(row=7, column=2, padx=(8, 24), pady=(12, 8), sticky="ew")
 
         status_label = ctk.CTkLabel(self, textvariable=self.status, text_color="gray")
-        status_label.grid(row=7, column=0, columnspan=3, padx=24, pady=(12, 24), sticky="w")
+        status_label.grid(row=8, column=0, columnspan=3, padx=24, pady=(12, 24), sticky="w")
 
     def _choose_input(self) -> None:
         if self.batch_mode.get():
@@ -181,6 +191,7 @@ class VoiceChangerApp(ctk.CTk):
                     input_dir=input_file,
                     output_dir=output_file,
                     semitones=self.semitones.get(),
+                    preset=self.preset.get(),
                     on_progress=self._show_batch_progress,
                 )
                 message = f"Converted {len(results)} file(s)."
@@ -195,6 +206,7 @@ class VoiceChangerApp(ctk.CTk):
                 input_path=input_file,
                 output_path=output_file,
                 semitones=self.semitones.get(),
+                preset=self.preset.get(),
             )
         except Exception as exc:
             self.status.set("Conversion failed")
