@@ -132,10 +132,13 @@ def batch(
     actual_semitones = config.default_semitones if semitones is None else semitones
     actual_preset = config.default_preset if preset is None else preset
 
-    def show_progress(index: int, total: int, result: Path) -> None:
-        click.echo(f"[{index}/{total}] Saved: {result}")
+    def show_progress(index: int, total: int, result) -> None:
+        if result.succeeded:
+            click.echo(f"[{index}/{total}] Saved: {result.output_path}")
+        else:
+            click.echo(f"[{index}/{total}] Failed: {result.input_path} ({result.error})")
 
-    results = convert_directory(
+    result = convert_directory(
         input_dir=input_dir,
         output_dir=output_dir,
         semitones=actual_semitones,
@@ -151,7 +154,10 @@ def batch(
         semitones=actual_semitones,
         preset=actual_preset,
     )
-    click.echo(f"Converted {len(results)} file(s).")
+    click.echo(
+        f"Batch finished: {result.success_count} succeeded, "
+        f"{result.failure_count} failed, {result.total_count} total."
+    )
 
 
 @main.command("demo")

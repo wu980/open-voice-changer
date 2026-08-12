@@ -1,10 +1,47 @@
 from collections.abc import Callable, Iterable
+from dataclasses import dataclass
 from pathlib import Path
 
 from open_voice_changer.audio import convert_pitch
 from open_voice_changer.config import build_default_output_path
 
 AUDIO_EXTENSIONS = {".wav", ".mp3", ".flac", ".ogg", ".m4a"}
+
+
+@dataclass(frozen=True)
+class BatchItemResult:
+    input_path: Path
+    output_path: Path | None
+    error: str | None = None
+
+    @property
+    def succeeded(self) -> bool:
+        return self.error is None
+
+
+@dataclass(frozen=True)
+class BatchResult:
+    items: list[BatchItemResult]
+
+    @property
+    def succeeded(self) -> list[BatchItemResult]:
+        return [item for item in self.items if item.succeeded]
+
+    @property
+    def failed(self) -> list[BatchItemResult]:
+        return [item for item in self.items if not item.succeeded]
+
+    @property
+    def success_count(self) -> int:
+        return len(self.succeeded)
+
+    @property
+    def failure_count(self) -> int:
+        return len(self.failed)
+
+    @property
+    def total_count(self) -> int:
+        return len(self.items)
 
 
 def is_audio_file(path: str | Path) -> bool:
@@ -44,8 +81,8 @@ def convert_batch(
     sample_rate: int | None = None,
     preset: str = "clean",
     avoid_overwrite: bool = True,
-    on_progress: Callable[[int, int, Path], None] | None = None,
-) -> list[Path]:
+    on_progress: Callable[[int, int, BatchItemResult], None] | None = None,
+) -> BatchResult:
     files = [Path(path) for path in input_files]
     if not files:
         raise ValueError("No audio files to convert.")
@@ -53,30 +90,35 @@ def convert_batch(
     destination = Path(output_dir)
     destination.mkdir(parents=True, exist_ok=True)
 
-    results: list[Path] = []
+    results: list[BatchItemResult] = []
     total = len(files)
 
     for index, input_file in enumerate(files, start=1):
-        output_file = build_output_path(
-            input_file=input_file,
-            output_dir=destination,
-            preset=preset,
-            semitones=semitones,
-            avoid_overwrite=avoid_overwrite,
-        )
-        result = convert_pitch(
-            input_path=input_file,
-            output_path=output_file,
-            semitones=semitones,
-            sample_rate=sample_rate,
-            preset=preset,
-        )
+        try:
+            output_file = build_output_path(
+                input_file=input_file,
+                output_dir=destination,
+                preset=preset,
+                semitones=semitones,
+                avoid_overwrite=avoid_overwrite,
+            )
+            result_path = convert_pitch(
+                input_path=input_file,
+                output_path=output_file,
+                semitones=semitones,
+                sample_rate=sample_rate,
+                preset=preset,
+            )
+            result = BatchItemResult(input_path=input_file, output_path=result_path)
+        except Exception as exc:
+            result = BatchItemResult(input_path=input_file, output_path=None, error=str(exc))
+
         results.append(result)
 
         if on_progress is not None:
             on_progress(index, total, result)
 
-    return results
+    return BatchResult(results)
 
 
 def convert_directory(
@@ -86,8 +128,8 @@ def convert_directory(
     sample_rate: int | None = None,
     preset: str = "clean",
     avoid_overwrite: bool = True,
-    on_progress: Callable[[int, int, Path], None] | None = None,
-) -> list[Path]:
+    on_progress: Callable[[int, int, BatchItemResult], None] | None = None,
+) -> BatchResult:
     files = find_audio_files(input_dir)
     return convert_batch(
         input_files=files,

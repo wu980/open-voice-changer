@@ -49,6 +49,12 @@
 - Let `ovc shift` auto-generate output paths
 - Load and save defaults from the desktop interface
 
+## v0.9 - Batch Error Reports
+
+- Continue batch conversion when one file fails
+- Report success and failure counts
+- Show failed files in the desktop interface
+
 ## v1.0 - Stable Local Tool
 
 - Improve docs

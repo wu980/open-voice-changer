@@ -69,6 +69,8 @@ ovc history
 
 When `ovc shift` is run without an output file, it uses your saved defaults and creates a filename that includes the preset and semitone value.
 
+Batch conversion continues when one file fails and prints a final success/failure summary.
+
 Supported batch input formats:
 
 - `.wav`

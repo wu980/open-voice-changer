@@ -215,7 +215,7 @@ class VoiceChangerApp(ctk.CTk):
             self.progress_bar.set(0)
             self.update_idletasks()
             if self.batch_mode.get():
-                results = convert_directory(
+                result = convert_directory(
                     input_dir=input_file,
                     output_dir=output_file,
                     semitones=self.semitones.get(),
@@ -230,12 +230,21 @@ class VoiceChangerApp(ctk.CTk):
                     semitones=self.semitones.get(),
                     preset=self.preset.get(),
                 )
-                message = f"Converted {len(results)} file(s)."
+                message = (
+                    f"Batch finished: {result.success_count} succeeded, "
+                    f"{result.failure_count} failed."
+                )
                 self.last_output_path = Path(output_file)
                 self.progress_bar.set(1)
                 self.status.set(message)
                 self.open_output_button.configure(state="normal")
-                messagebox.showinfo("Done", message)
+                if result.failure_count:
+                    failures = "\n".join(
+                        f"- {item.input_path.name}: {item.error}" for item in result.failed[:5]
+                    )
+                    messagebox.showwarning("Batch completed with errors", f"{message}\n\n{failures}")
+                else:
+                    messagebox.showinfo("Done", message)
                 return
 
             result = convert_pitch(
@@ -265,10 +274,13 @@ class VoiceChangerApp(ctk.CTk):
         self.open_output_button.configure(state="normal")
         messagebox.showinfo("Done", f"Saved converted audio:\n{result}")
 
-    def _show_batch_progress(self, index: int, total: int, result: Path) -> None:
+    def _show_batch_progress(self, index: int, total: int, result) -> None:
         if total:
             self.progress_bar.set(index / total)
-        self.status.set(f"Converted {index}/{total}: {result.name}")
+        if result.succeeded:
+            self.status.set(f"Converted {index}/{total}: {result.output_path.name}")
+        else:
+            self.status.set(f"Failed {index}/{total}: {result.input_path.name}")
         self.update_idletasks()
 
     def _set_busy(self, busy: bool) -> None:
