@@ -87,6 +87,12 @@
 - Add pull request template
 - Add GitHub issue templates
 
+## v0.15 - Online Demo Prototype
+
+- Add Gradio demo app
+- Add online demo dependency file
+- Add online demo deployment guide
+
 ## v1.0 - Stable Local Tool
 
 - Improve docs

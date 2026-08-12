@@ -39,6 +39,15 @@ This creates a synthetic demo input and preset examples in `outputs\demo`.
 
 Recent conversions are saved to `outputs\history.jsonl`.
 
+Online demo prototype:
+
+```powershell
+python -m pip install -r requirements-demo.txt
+python demo_app.py
+```
+
+See [docs/online-demo.md](docs/online-demo.md).
+
 Desktop interface:
 
 ```powershell
