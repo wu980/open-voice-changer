@@ -4,6 +4,7 @@ from pathlib import Path
 
 from open_voice_changer.audio import convert_pitch
 from open_voice_changer.config import build_default_output_path
+from open_voice_changer.logging_utils import get_logger
 
 AUDIO_EXTENSIONS = {".wav", ".mp3", ".flac", ".ogg", ".m4a"}
 
@@ -83,6 +84,7 @@ def convert_batch(
     avoid_overwrite: bool = True,
     on_progress: Callable[[int, int, BatchItemResult], None] | None = None,
 ) -> BatchResult:
+    logger = get_logger()
     files = [Path(path) for path in input_files]
     if not files:
         raise ValueError("No audio files to convert.")
@@ -110,8 +112,10 @@ def convert_batch(
                 preset=preset,
             )
             result = BatchItemResult(input_path=input_file, output_path=result_path)
+            logger.info("Batch item converted: input=%s output=%s", input_file, result_path)
         except Exception as exc:
             result = BatchItemResult(input_path=input_file, output_path=None, error=str(exc))
+            logger.exception("Batch item failed: input=%s", input_file)
 
         results.append(result)
 

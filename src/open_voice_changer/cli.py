@@ -16,6 +16,7 @@ from open_voice_changer.config import (
 from open_voice_changer.demo import create_demo_outputs
 from open_voice_changer.effects import preset_names
 from open_voice_changer.history import read_history, record_history
+from open_voice_changer.logging_utils import get_logger, log_path
 from open_voice_changer.player import open_audio
 from open_voice_changer.reports import write_batch_report
 
@@ -64,6 +65,7 @@ def shift(
     preset: str | None,
 ) -> None:
     """Shift the pitch of INPUT_FILE and save OUTPUT_FILE."""
+    logger = get_logger()
     config = load_config()
     actual_semitones = config.default_semitones if semitones is None else semitones
     actual_preset = config.default_preset if preset is None else preset
@@ -81,6 +83,13 @@ def shift(
         semitones=actual_semitones,
         sample_rate=sample_rate,
         preset=actual_preset,
+    )
+    logger.info(
+        "Single conversion completed: input=%s output=%s preset=%s semitones=%s",
+        input_file,
+        result,
+        actual_preset,
+        actual_semitones,
     )
     record_history(
         mode="single",
@@ -130,6 +139,7 @@ def batch(
     preset: str | None,
 ) -> None:
     """Convert all supported audio files in INPUT_DIR."""
+    logger = get_logger()
     config = load_config()
     actual_semitones = config.default_semitones if semitones is None else semitones
     actual_preset = config.default_preset if preset is None else preset
@@ -160,12 +170,22 @@ def batch(
         f"Batch finished: {result.success_count} succeeded, "
         f"{result.failure_count} failed, {result.total_count} total."
     )
+    logger.info(
+        "Batch conversion completed: input=%s output=%s preset=%s semitones=%s success=%s failed=%s",
+        input_dir,
+        output_dir,
+        actual_preset,
+        actual_semitones,
+        result.success_count,
+        result.failure_count,
+    )
     report_path = write_batch_report(
         result=result,
         output_dir=output_dir,
         preset=actual_preset,
         semitones=actual_semitones,
     )
+    logger.info("Batch report saved: %s", report_path)
     click.echo(f"Report saved: {report_path}")
 
 
@@ -180,7 +200,9 @@ def batch(
 )
 def demo(output_dir: Path) -> None:
     """Generate demo audio and example outputs for every preset."""
+    logger = get_logger()
     results = create_demo_outputs(output_dir=output_dir)
+    logger.info("Demo files generated: output_dir=%s count=%s", output_dir, len(results))
     record_history(
         mode="demo",
         input_path=results[0],
@@ -223,7 +245,9 @@ def history(limit: int) -> None:
 )
 def play(audio_file: Path) -> None:
     """Open an audio file in the system player."""
+    logger = get_logger()
     result = open_audio(audio_file)
+    logger.info("Audio opened in system player: %s", result)
     click.echo(f"Opened audio: {result}")
 
 
@@ -246,10 +270,18 @@ def config_path() -> None:
     click.echo(DEFAULT_CONFIG_PATH)
 
 
+@config.command("log-path")
+def config_log_path() -> None:
+    """Show the log file path."""
+    click.echo(log_path())
+
+
 @config.command("reset")
 def config_reset() -> None:
     """Reset user defaults."""
+    logger = get_logger()
     path = save_config(default_config())
+    logger.info("Config reset: %s", path)
     click.echo(f"Reset config: {path}")
 
 
@@ -258,6 +290,7 @@ def config_reset() -> None:
 @click.argument("value")
 def config_set(field: str, value: str) -> None:
     """Set one config field."""
+    logger = get_logger()
     parsed_value: str | float | bool = value
     if field == "default_semitones":
         parsed_value = float(value)
@@ -265,6 +298,7 @@ def config_set(field: str, value: str) -> None:
         parsed_value = value
 
     current = update_config({field: parsed_value})
+    logger.info("Config updated: %s=%s", field, getattr(current, field))
     click.echo(f"Updated {field}: {getattr(current, field)}")
 
 

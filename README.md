@@ -58,6 +58,7 @@ ovc config show
 ovc config set default_preset deep
 ovc config set default_semitones -3
 ovc config set default_output_dir outputs
+ovc config log-path
 ovc shift input.wav outputs\voice-high.wav --semitones 4 --preset bright
 ovc shift input.wav
 ovc shift input.wav outputs\voice-low.wav --semitones -3 --preset deep
@@ -87,6 +88,8 @@ Supported batch input formats:
 Generated audio files in `outputs\` are ignored by Git.
 
 User defaults are saved to `outputs\config.json`.
+
+Application logs are saved to `outputs\logs\app.log`.
 
 ## Project Goals
 

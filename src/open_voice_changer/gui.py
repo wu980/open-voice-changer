@@ -15,6 +15,7 @@ from open_voice_changer.config import (
 )
 from open_voice_changer.effects import preset_names
 from open_voice_changer.history import record_history
+from open_voice_changer.logging_utils import get_logger
 from open_voice_changer.player import open_audio
 from open_voice_changer.reports import write_batch_report
 
@@ -31,6 +32,7 @@ class VoiceChangerApp(ctk.CTk):
         ctk.set_default_color_theme("blue")
 
         self.config = load_config()
+        self.logger = get_logger()
         self.input_path = ctk.StringVar()
         self.output_path = ctk.StringVar(value=self.config.default_output_dir)
         self.batch_mode = ctk.BooleanVar(value=False)
@@ -261,6 +263,14 @@ class VoiceChangerApp(ctk.CTk):
                     preset=self.preset.get(),
                     semitones=self.semitones.get(),
                 )
+                self.logger.info(
+                    "GUI batch completed: input=%s output=%s success=%s failed=%s report=%s",
+                    input_file,
+                    output_file,
+                    result.success_count,
+                    result.failure_count,
+                    report_path,
+                )
                 self.last_output_path = Path(output_file)
                 self.progress_bar.set(1)
                 self.status.set(f"{message} Report: {report_path.name}")
@@ -287,6 +297,7 @@ class VoiceChangerApp(ctk.CTk):
         except Exception as exc:
             self.status.set("Conversion failed")
             self.progress_bar.set(0)
+            self.logger.exception("GUI conversion failed")
             messagebox.showerror("Conversion failed", str(exc))
             return
         finally:
@@ -304,6 +315,7 @@ class VoiceChangerApp(ctk.CTk):
         self.status.set(f"Saved: {result}")
         self.open_output_button.configure(state="normal")
         self.play_output_button.configure(state="normal")
+        self.logger.info("GUI single conversion completed: input=%s output=%s", input_file, result)
         messagebox.showinfo("Done", f"Saved converted audio:\n{result}")
 
     def _show_batch_progress(self, index: int, total: int, result) -> None:
@@ -382,12 +394,14 @@ class VoiceChangerApp(ctk.CTk):
                 "default_semitones": self.semitones.get(),
             }
         )
+        self.logger.info("GUI defaults saved: %s", self.config)
         self.status.set("Defaults saved")
         messagebox.showinfo("Defaults saved", "Your default settings were saved.")
 
     def _reset_defaults(self) -> None:
         self.config = default_config()
         save_config(self.config)
+        self.logger.info("GUI defaults reset")
         self.semitones.set(self.config.default_semitones)
         self.preset.set(self.config.default_preset)
         self.output_path.set(self.config.default_output_dir)

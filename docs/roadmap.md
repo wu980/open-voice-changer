@@ -67,6 +67,12 @@
 - Include success/failure status for every file
 - Include output path, error, preset, and semitones
 
+## v0.12 - Logging
+
+- Write application logs to `outputs/logs/app.log`
+- Log conversion results and errors
+- Add `ovc config log-path`
+
 ## v1.0 - Stable Local Tool
 
 - Improve docs
