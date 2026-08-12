@@ -25,10 +25,11 @@ ovc history
 1. Update the version in `pyproject.toml`.
 2. Update the version in `src/open_voice_changer/__init__.py`.
 3. Move the changelog section from `Unreleased` to the release date.
-4. Commit the release prep changes.
-5. Push to GitHub.
-6. Confirm GitHub Actions passes.
-7. Create a GitHub release with the matching tag.
+4. Update or create release notes under `docs/`.
+5. Commit the release prep changes.
+6. Push to GitHub.
+7. Confirm GitHub Actions passes.
+8. Create a GitHub release with the matching tag.
 
 Tag example:
 
