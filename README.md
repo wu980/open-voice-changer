@@ -1,5 +1,3 @@
-# open-voice-changer
-Local-first open source voice changer for audio files and future real-time voice conversion.
 # Open Voice Changer
 
 Open Voice Changer is a local-first open source voice changer.
@@ -12,6 +10,7 @@ The first version focuses on offline audio file conversion. Future versions may 
 - Shift pitch up or down
 - Export a converted audio file
 - Run from the command line
+- Run from a simple desktop interface
 
 ## Install for Development
 
@@ -23,6 +22,14 @@ pip install -e .
 ```
 
 ## Usage
+
+Desktop interface:
+
+```powershell
+ovc-ui
+```
+
+Command line:
 
 ```powershell
 ovc shift input.wav outputs\voice-high.wav --semitones 4
