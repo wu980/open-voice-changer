@@ -6,6 +6,13 @@ import customtkinter as ctk
 
 from open_voice_changer.audio import convert_pitch
 from open_voice_changer.batch import convert_directory
+from open_voice_changer.config import (
+    build_default_output_path,
+    default_config,
+    load_config,
+    save_config,
+    update_config,
+)
 from open_voice_changer.effects import preset_names
 from open_voice_changer.history import record_history
 
@@ -21,11 +28,12 @@ class VoiceChangerApp(ctk.CTk):
         ctk.set_appearance_mode("System")
         ctk.set_default_color_theme("blue")
 
+        self.config = load_config()
         self.input_path = ctk.StringVar()
-        self.output_path = ctk.StringVar(value=str(Path("outputs") / "converted.wav"))
+        self.output_path = ctk.StringVar(value=self.config.default_output_dir)
         self.batch_mode = ctk.BooleanVar(value=False)
-        self.semitones = ctk.DoubleVar(value=0.0)
-        self.preset = ctk.StringVar(value="clean")
+        self.semitones = ctk.DoubleVar(value=self.config.default_semitones)
+        self.preset = ctk.StringVar(value=self.config.default_preset)
         self.status = ctk.StringVar(value="Ready")
         self.last_output_path: Path | None = None
 
@@ -78,11 +86,11 @@ class VoiceChangerApp(ctk.CTk):
             to=12,
             number_of_steps=48,
             variable=self.semitones,
-            command=self._update_pitch_label,
+            command=self._on_pitch_change,
         )
         slider.grid(row=4, column=1, padx=8, pady=8, sticky="ew")
 
-        self.pitch_label = ctk.CTkLabel(self, text="0.0")
+        self.pitch_label = ctk.CTkLabel(self, text=f"{self.semitones.get():.1f}")
         self.pitch_label.grid(row=4, column=2, padx=(8, 24), pady=8)
 
         ctk.CTkLabel(self, text="Preset").grid(row=5, column=0, padx=24, pady=8, sticky="w")
@@ -90,6 +98,7 @@ class VoiceChangerApp(ctk.CTk):
             self,
             values=preset_names(),
             variable=self.preset,
+            command=self._on_preset_change,
         )
         preset_menu.grid(row=5, column=1, padx=8, pady=8, sticky="ew")
 
@@ -114,8 +123,22 @@ class VoiceChangerApp(ctk.CTk):
         )
         self.open_output_button.grid(row=7, column=2, padx=(8, 24), pady=(12, 8), sticky="ew")
 
+        save_defaults_button = ctk.CTkButton(
+            self,
+            text="Save Defaults",
+            command=self._save_defaults,
+        )
+        save_defaults_button.grid(row=8, column=1, padx=8, pady=(8, 0), sticky="ew")
+
+        reset_defaults_button = ctk.CTkButton(
+            self,
+            text="Reset Defaults",
+            command=self._reset_defaults,
+        )
+        reset_defaults_button.grid(row=8, column=2, padx=(8, 24), pady=(8, 0), sticky="ew")
+
         status_label = ctk.CTkLabel(self, textvariable=self.status, text_color="gray")
-        status_label.grid(row=8, column=0, columnspan=3, padx=24, pady=(12, 24), sticky="w")
+        status_label.grid(row=9, column=0, columnspan=3, padx=24, pady=(12, 24), sticky="w")
 
     def _choose_input(self) -> None:
         if self.batch_mode.get():
@@ -135,7 +158,7 @@ class VoiceChangerApp(ctk.CTk):
         if filename:
             self.input_path.set(filename)
             input_file = Path(filename)
-            self.output_path.set(str(Path("outputs") / f"{input_file.stem}-converted.wav"))
+            self.output_path.set(str(self._build_default_output_for(input_file)))
 
     def _choose_output(self) -> None:
         if self.batch_mode.get():
@@ -155,19 +178,23 @@ class VoiceChangerApp(ctk.CTk):
         if filename:
             self.output_path.set(filename)
 
-    def _update_pitch_label(self, value: float) -> None:
+    def _on_pitch_change(self, value: float) -> None:
         self.pitch_label.configure(text=f"{float(value):.1f}")
+        self._refresh_single_output_path()
+
+    def _on_preset_change(self, _value: str) -> None:
+        self._refresh_single_output_path()
 
     def _toggle_mode(self) -> None:
         if self.batch_mode.get():
             self.input_label.configure(text="Input folder")
             self.output_label.configure(text="Output folder")
-            self.output_path.set(str(Path("outputs")))
+            self.output_path.set(self.config.default_output_dir)
             self.open_output_button.configure(state="disabled")
         else:
             self.input_label.configure(text="Input audio")
             self.output_label.configure(text="Output file")
-            self.output_path.set(str(Path("outputs") / "converted.wav"))
+            self._refresh_single_output_path()
             self.open_output_button.configure(state="disabled")
 
     def _convert(self) -> None:
@@ -193,6 +220,7 @@ class VoiceChangerApp(ctk.CTk):
                     output_dir=output_file,
                     semitones=self.semitones.get(),
                     preset=self.preset.get(),
+                    avoid_overwrite=self.config.avoid_overwrite,
                     on_progress=self._show_batch_progress,
                 )
                 record_history(
@@ -255,3 +283,44 @@ class VoiceChangerApp(ctk.CTk):
         folder = target if target.is_dir() else target.parent
         folder.mkdir(parents=True, exist_ok=True)
         os.startfile(folder)
+
+    def _refresh_single_output_path(self) -> None:
+        if self.batch_mode.get():
+            return
+        input_file = self.input_path.get().strip()
+        if input_file:
+            self.output_path.set(str(self._build_default_output_for(input_file)))
+        elif not self.output_path.get().strip():
+            self.output_path.set(self.config.default_output_dir)
+
+    def _build_default_output_for(self, input_file: str | Path) -> Path:
+        return build_default_output_path(
+            input_path=input_file,
+            output_dir=self.config.default_output_dir,
+            preset=self.preset.get(),
+            semitones=self.semitones.get(),
+            avoid_overwrite=self.config.avoid_overwrite,
+        )
+
+    def _save_defaults(self) -> None:
+        output_path = self.output_path.get().strip()
+        output_dir = output_path if self.batch_mode.get() else str(Path(output_path).parent)
+        self.config = update_config(
+            {
+                "default_output_dir": output_dir or "outputs",
+                "default_preset": self.preset.get(),
+                "default_semitones": self.semitones.get(),
+            }
+        )
+        self.status.set("Defaults saved")
+        messagebox.showinfo("Defaults saved", "Your default settings were saved.")
+
+    def _reset_defaults(self) -> None:
+        self.config = default_config()
+        save_config(self.config)
+        self.semitones.set(self.config.default_semitones)
+        self.preset.set(self.config.default_preset)
+        self.output_path.set(self.config.default_output_dir)
+        self.pitch_label.configure(text=f"{self.semitones.get():.1f}")
+        self.status.set("Defaults reset")
+        messagebox.showinfo("Defaults reset", "Default settings were reset.")

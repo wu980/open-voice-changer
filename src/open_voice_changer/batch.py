@@ -2,6 +2,7 @@ from collections.abc import Callable, Iterable
 from pathlib import Path
 
 from open_voice_changer.audio import convert_pitch
+from open_voice_changer.config import build_default_output_path
 
 AUDIO_EXTENSIONS = {".wav", ".mp3", ".flac", ".ogg", ".m4a"}
 
@@ -20,9 +21,20 @@ def find_audio_files(input_dir: str | Path) -> list[Path]:
     return sorted(path for path in directory.iterdir() if path.is_file() and is_audio_file(path))
 
 
-def build_output_path(input_file: str | Path, output_dir: str | Path, suffix: str = "-converted") -> Path:
-    source = Path(input_file)
-    return Path(output_dir) / f"{source.stem}{suffix}.wav"
+def build_output_path(
+    input_file: str | Path,
+    output_dir: str | Path,
+    preset: str = "clean",
+    semitones: float = 0.0,
+    avoid_overwrite: bool = True,
+) -> Path:
+    return build_default_output_path(
+        input_path=input_file,
+        output_dir=output_dir,
+        preset=preset,
+        semitones=semitones,
+        avoid_overwrite=avoid_overwrite,
+    )
 
 
 def convert_batch(
@@ -31,6 +43,7 @@ def convert_batch(
     semitones: float,
     sample_rate: int | None = None,
     preset: str = "clean",
+    avoid_overwrite: bool = True,
     on_progress: Callable[[int, int, Path], None] | None = None,
 ) -> list[Path]:
     files = [Path(path) for path in input_files]
@@ -44,7 +57,13 @@ def convert_batch(
     total = len(files)
 
     for index, input_file in enumerate(files, start=1):
-        output_file = build_output_path(input_file, destination)
+        output_file = build_output_path(
+            input_file=input_file,
+            output_dir=destination,
+            preset=preset,
+            semitones=semitones,
+            avoid_overwrite=avoid_overwrite,
+        )
         result = convert_pitch(
             input_path=input_file,
             output_path=output_file,
@@ -66,6 +85,7 @@ def convert_directory(
     semitones: float,
     sample_rate: int | None = None,
     preset: str = "clean",
+    avoid_overwrite: bool = True,
     on_progress: Callable[[int, int, Path], None] | None = None,
 ) -> list[Path]:
     files = find_audio_files(input_dir)
@@ -75,5 +95,6 @@ def convert_directory(
         semitones=semitones,
         sample_rate=sample_rate,
         preset=preset,
+        avoid_overwrite=avoid_overwrite,
         on_progress=on_progress,
     )

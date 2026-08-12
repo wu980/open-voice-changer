@@ -54,13 +54,20 @@ Available presets:
 Command line:
 
 ```powershell
+ovc config show
+ovc config set default_preset deep
+ovc config set default_semitones -3
+ovc config set default_output_dir outputs
 ovc shift input.wav outputs\voice-high.wav --semitones 4 --preset bright
+ovc shift input.wav
 ovc shift input.wav outputs\voice-low.wav --semitones -3 --preset deep
 ovc batch samples outputs --semitones 4 --preset radio
 ovc history
 ```
 
 `--semitones` controls pitch. Positive values sound higher, negative values sound lower.
+
+When `ovc shift` is run without an output file, it uses your saved defaults and creates a filename that includes the preset and semitone value.
 
 Supported batch input formats:
 
@@ -71,6 +78,8 @@ Supported batch input formats:
 - `.m4a`
 
 Generated audio files in `outputs\` are ignored by Git.
+
+User defaults are saved to `outputs\config.json`.
 
 ## Project Goals
 

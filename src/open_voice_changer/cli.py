@@ -1,9 +1,18 @@
 from pathlib import Path
+from dataclasses import asdict
 
 import click
 
 from open_voice_changer.audio import convert_pitch
 from open_voice_changer.batch import convert_directory
+from open_voice_changer.config import (
+    DEFAULT_CONFIG_PATH,
+    build_default_output_path,
+    default_config,
+    load_config,
+    save_config,
+    update_config,
+)
 from open_voice_changer.demo import create_demo_outputs
 from open_voice_changer.effects import preset_names
 from open_voice_changer.history import read_history, record_history
@@ -21,15 +30,15 @@ def main() -> None:
 )
 @click.argument(
     "output_file",
+    required=False,
     type=click.Path(dir_okay=False, path_type=Path),
 )
 @click.option(
     "--semitones",
     "-s",
-    default=0.0,
-    show_default=True,
+    default=None,
     type=float,
-    help="Pitch shift amount. Positive is higher, negative is lower.",
+    help="Pitch shift amount. Uses config default when omitted.",
 )
 @click.option(
     "--sample-rate",
@@ -41,32 +50,42 @@ def main() -> None:
 @click.option(
     "--preset",
     "-p",
-    default="clean",
-    show_default=True,
+    default=None,
     type=click.Choice(preset_names(), case_sensitive=False),
-    help="Voice effect preset.",
+    help="Voice effect preset. Uses config default when omitted.",
 )
 def shift(
     input_file: Path,
-    output_file: Path,
-    semitones: float,
+    output_file: Path | None,
+    semitones: float | None,
     sample_rate: int | None,
-    preset: str,
+    preset: str | None,
 ) -> None:
     """Shift the pitch of INPUT_FILE and save OUTPUT_FILE."""
+    config = load_config()
+    actual_semitones = config.default_semitones if semitones is None else semitones
+    actual_preset = config.default_preset if preset is None else preset
+    actual_output_file = output_file or build_default_output_path(
+        input_path=input_file,
+        output_dir=config.default_output_dir,
+        preset=actual_preset,
+        semitones=actual_semitones,
+        avoid_overwrite=config.avoid_overwrite,
+    )
+
     result = convert_pitch(
         input_path=input_file,
-        output_path=output_file,
-        semitones=semitones,
+        output_path=actual_output_file,
+        semitones=actual_semitones,
         sample_rate=sample_rate,
-        preset=preset,
+        preset=actual_preset,
     )
     record_history(
         mode="single",
         input_path=input_file,
         output_path=result,
-        semitones=semitones,
-        preset=preset,
+        semitones=actual_semitones,
+        preset=actual_preset,
     )
     click.echo(f"Saved converted audio: {result}")
 
@@ -83,10 +102,9 @@ def shift(
 @click.option(
     "--semitones",
     "-s",
-    default=0.0,
-    show_default=True,
+    default=None,
     type=float,
-    help="Pitch shift amount for every audio file.",
+    help="Pitch shift amount for every audio file. Uses config default when omitted.",
 )
 @click.option(
     "--sample-rate",
@@ -98,19 +116,21 @@ def shift(
 @click.option(
     "--preset",
     "-p",
-    default="clean",
-    show_default=True,
+    default=None,
     type=click.Choice(preset_names(), case_sensitive=False),
-    help="Voice effect preset for every audio file.",
+    help="Voice effect preset for every audio file. Uses config default when omitted.",
 )
 def batch(
     input_dir: Path,
     output_dir: Path,
-    semitones: float,
+    semitones: float | None,
     sample_rate: int | None,
-    preset: str,
+    preset: str | None,
 ) -> None:
     """Convert all supported audio files in INPUT_DIR."""
+    config = load_config()
+    actual_semitones = config.default_semitones if semitones is None else semitones
+    actual_preset = config.default_preset if preset is None else preset
 
     def show_progress(index: int, total: int, result: Path) -> None:
         click.echo(f"[{index}/{total}] Saved: {result}")
@@ -118,17 +138,18 @@ def batch(
     results = convert_directory(
         input_dir=input_dir,
         output_dir=output_dir,
-        semitones=semitones,
+        semitones=actual_semitones,
         sample_rate=sample_rate,
-        preset=preset,
+        preset=actual_preset,
+        avoid_overwrite=config.avoid_overwrite,
         on_progress=show_progress,
     )
     record_history(
         mode="batch",
         input_path=input_dir,
         output_path=output_dir,
-        semitones=semitones,
-        preset=preset,
+        semitones=actual_semitones,
+        preset=actual_preset,
     )
     click.echo(f"Converted {len(results)} file(s).")
 
@@ -178,6 +199,47 @@ def history(limit: int) -> None:
             f"{entry.created_at} | {entry.mode} | preset={entry.preset} | "
             f"semitones={entry.semitones:g} | {entry.output_path}"
         )
+
+
+@main.group("config")
+def config() -> None:
+    """Show and update user defaults."""
+
+
+@config.command("show")
+def config_show() -> None:
+    """Show current user defaults."""
+    current = load_config()
+    for key, value in asdict(current).items():
+        click.echo(f"{key}: {value}")
+
+
+@config.command("path")
+def config_path() -> None:
+    """Show the config file path."""
+    click.echo(DEFAULT_CONFIG_PATH)
+
+
+@config.command("reset")
+def config_reset() -> None:
+    """Reset user defaults."""
+    path = save_config(default_config())
+    click.echo(f"Reset config: {path}")
+
+
+@config.command("set")
+@click.argument("field")
+@click.argument("value")
+def config_set(field: str, value: str) -> None:
+    """Set one config field."""
+    parsed_value: str | float | bool = value
+    if field == "default_semitones":
+        parsed_value = float(value)
+    elif field == "avoid_overwrite":
+        parsed_value = value
+
+    current = update_config({field: parsed_value})
+    click.echo(f"Updated {field}: {getattr(current, field)}")
 
 
 if __name__ == "__main__":

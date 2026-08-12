@@ -42,6 +42,13 @@
 - Add `ovc history`
 - Ignore generated outputs in Git
 
+## v0.8 - User Defaults
+
+- Save default output directory, preset, and semitones
+- Add `ovc config show`, `set`, `path`, and `reset`
+- Let `ovc shift` auto-generate output paths
+- Load and save defaults from the desktop interface
+
 ## v1.0 - Stable Local Tool
 
 - Improve docs
