@@ -36,6 +36,12 @@
 - Export demo outputs for every preset
 - Document a quick demo command for new users
 
+## v0.7 - Conversion History
+
+- Record recent conversions in `outputs/history.jsonl`
+- Add `ovc history`
+- Ignore generated outputs in Git
+
 ## v1.0 - Stable Local Tool
 
 - Improve docs

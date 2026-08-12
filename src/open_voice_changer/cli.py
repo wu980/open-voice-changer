@@ -6,6 +6,7 @@ from open_voice_changer.audio import convert_pitch
 from open_voice_changer.batch import convert_directory
 from open_voice_changer.demo import create_demo_outputs
 from open_voice_changer.effects import preset_names
+from open_voice_changer.history import read_history, record_history
 
 
 @click.group()
@@ -58,6 +59,13 @@ def shift(
         output_path=output_file,
         semitones=semitones,
         sample_rate=sample_rate,
+        preset=preset,
+    )
+    record_history(
+        mode="single",
+        input_path=input_file,
+        output_path=result,
+        semitones=semitones,
         preset=preset,
     )
     click.echo(f"Saved converted audio: {result}")
@@ -115,6 +123,13 @@ def batch(
         preset=preset,
         on_progress=show_progress,
     )
+    record_history(
+        mode="batch",
+        input_path=input_dir,
+        output_path=output_dir,
+        semitones=semitones,
+        preset=preset,
+    )
     click.echo(f"Converted {len(results)} file(s).")
 
 
@@ -130,9 +145,39 @@ def batch(
 def demo(output_dir: Path) -> None:
     """Generate demo audio and example outputs for every preset."""
     results = create_demo_outputs(output_dir=output_dir)
+    record_history(
+        mode="demo",
+        input_path=results[0],
+        output_path=output_dir,
+        semitones=0,
+        preset="all",
+    )
     click.echo("Generated demo files:")
     for result in results:
         click.echo(f"- {result}")
+
+
+@main.command("history")
+@click.option(
+    "--limit",
+    "-n",
+    default=10,
+    show_default=True,
+    type=int,
+    help="Number of recent history entries to show.",
+)
+def history(limit: int) -> None:
+    """Show recent conversion history."""
+    entries = read_history(limit=limit)
+    if not entries:
+        click.echo("No history yet.")
+        return
+
+    for entry in entries:
+        click.echo(
+            f"{entry.created_at} | {entry.mode} | preset={entry.preset} | "
+            f"semitones={entry.semitones:g} | {entry.output_path}"
+        )
 
 
 if __name__ == "__main__":

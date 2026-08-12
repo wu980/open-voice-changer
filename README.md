@@ -31,6 +31,8 @@ ovc demo
 
 This creates a synthetic demo input and preset examples in `outputs\demo`.
 
+Recent conversions are saved to `outputs\history.jsonl`.
+
 Desktop interface:
 
 ```powershell
@@ -55,6 +57,7 @@ Command line:
 ovc shift input.wav outputs\voice-high.wav --semitones 4 --preset bright
 ovc shift input.wav outputs\voice-low.wav --semitones -3 --preset deep
 ovc batch samples outputs --semitones 4 --preset radio
+ovc history
 ```
 
 `--semitones` controls pitch. Positive values sound higher, negative values sound lower.
@@ -66,6 +69,8 @@ Supported batch input formats:
 - `.flac`
 - `.ogg`
 - `.m4a`
+
+Generated audio files in `outputs\` are ignored by Git.
 
 ## Project Goals
 

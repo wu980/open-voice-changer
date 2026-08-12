@@ -7,6 +7,7 @@ import customtkinter as ctk
 from open_voice_changer.audio import convert_pitch
 from open_voice_changer.batch import convert_directory
 from open_voice_changer.effects import preset_names
+from open_voice_changer.history import record_history
 
 
 class VoiceChangerApp(ctk.CTk):
@@ -194,6 +195,13 @@ class VoiceChangerApp(ctk.CTk):
                     preset=self.preset.get(),
                     on_progress=self._show_batch_progress,
                 )
+                record_history(
+                    mode="batch",
+                    input_path=input_file,
+                    output_path=output_file,
+                    semitones=self.semitones.get(),
+                    preset=self.preset.get(),
+                )
                 message = f"Converted {len(results)} file(s)."
                 self.last_output_path = Path(output_file)
                 self.progress_bar.set(1)
@@ -217,6 +225,13 @@ class VoiceChangerApp(ctk.CTk):
             self._set_busy(False)
 
         self.last_output_path = Path(result)
+        record_history(
+            mode="single",
+            input_path=input_file,
+            output_path=result,
+            semitones=self.semitones.get(),
+            preset=self.preset.get(),
+        )
         self.progress_bar.set(1)
         self.status.set(f"Saved: {result}")
         self.open_output_button.configure(state="normal")
