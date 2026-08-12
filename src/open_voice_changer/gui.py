@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
@@ -23,6 +24,7 @@ class VoiceChangerApp(ctk.CTk):
         self.batch_mode = ctk.BooleanVar(value=False)
         self.semitones = ctk.DoubleVar(value=0.0)
         self.status = ctk.StringVar(value="Ready")
+        self.last_output_path: Path | None = None
 
         self._build_layout()
 
@@ -80,16 +82,29 @@ class VoiceChangerApp(ctk.CTk):
         self.pitch_label = ctk.CTkLabel(self, text="0.0")
         self.pitch_label.grid(row=4, column=2, padx=(8, 24), pady=8)
 
-        convert_button = ctk.CTkButton(
+        self.progress_bar = ctk.CTkProgressBar(self)
+        self.progress_bar.set(0)
+        self.progress_bar.grid(row=5, column=1, padx=8, pady=(20, 4), sticky="ew")
+
+        self.convert_button = ctk.CTkButton(
             self,
             text="Convert",
             height=40,
             command=self._convert,
         )
-        convert_button.grid(row=5, column=1, padx=8, pady=(24, 8), sticky="ew")
+        self.convert_button.grid(row=6, column=1, padx=8, pady=(12, 8), sticky="ew")
+
+        self.open_output_button = ctk.CTkButton(
+            self,
+            text="Open Output",
+            height=40,
+            state="disabled",
+            command=self._open_output_location,
+        )
+        self.open_output_button.grid(row=6, column=2, padx=(8, 24), pady=(12, 8), sticky="ew")
 
         status_label = ctk.CTkLabel(self, textvariable=self.status, text_color="gray")
-        status_label.grid(row=6, column=0, columnspan=3, padx=24, pady=(12, 24), sticky="w")
+        status_label.grid(row=7, column=0, columnspan=3, padx=24, pady=(12, 24), sticky="w")
 
     def _choose_input(self) -> None:
         if self.batch_mode.get():
@@ -137,10 +152,12 @@ class VoiceChangerApp(ctk.CTk):
             self.input_label.configure(text="Input folder")
             self.output_label.configure(text="Output folder")
             self.output_path.set(str(Path("outputs")))
+            self.open_output_button.configure(state="disabled")
         else:
             self.input_label.configure(text="Input audio")
             self.output_label.configure(text="Output file")
             self.output_path.set(str(Path("outputs") / "converted.wav"))
+            self.open_output_button.configure(state="disabled")
 
     def _convert(self) -> None:
         input_file = self.input_path.get().strip()
@@ -155,7 +172,9 @@ class VoiceChangerApp(ctk.CTk):
             return
 
         try:
+            self._set_busy(True)
             self.status.set("Converting...")
+            self.progress_bar.set(0)
             self.update_idletasks()
             if self.batch_mode.get():
                 results = convert_directory(
@@ -165,7 +184,10 @@ class VoiceChangerApp(ctk.CTk):
                     on_progress=self._show_batch_progress,
                 )
                 message = f"Converted {len(results)} file(s)."
+                self.last_output_path = Path(output_file)
+                self.progress_bar.set(1)
                 self.status.set(message)
+                self.open_output_button.configure(state="normal")
                 messagebox.showinfo("Done", message)
                 return
 
@@ -176,12 +198,33 @@ class VoiceChangerApp(ctk.CTk):
             )
         except Exception as exc:
             self.status.set("Conversion failed")
+            self.progress_bar.set(0)
             messagebox.showerror("Conversion failed", str(exc))
             return
+        finally:
+            self._set_busy(False)
 
+        self.last_output_path = Path(result)
+        self.progress_bar.set(1)
         self.status.set(f"Saved: {result}")
+        self.open_output_button.configure(state="normal")
         messagebox.showinfo("Done", f"Saved converted audio:\n{result}")
 
     def _show_batch_progress(self, index: int, total: int, result: Path) -> None:
+        if total:
+            self.progress_bar.set(index / total)
         self.status.set(f"Converted {index}/{total}: {result.name}")
         self.update_idletasks()
+
+    def _set_busy(self, busy: bool) -> None:
+        state = "disabled" if busy else "normal"
+        self.convert_button.configure(state=state)
+
+    def _open_output_location(self) -> None:
+        if self.last_output_path is None:
+            return
+
+        target = self.last_output_path
+        folder = target if target.is_dir() else target.parent
+        folder.mkdir(parents=True, exist_ok=True)
+        os.startfile(folder)

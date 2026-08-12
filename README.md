@@ -31,6 +31,8 @@ ovc-ui
 
 In the desktop interface, turn on `Batch folder mode` to convert every supported audio file in a folder.
 
+The desktop interface also shows conversion progress and can open the output folder after conversion.
+
 Command line:
 
 ```powershell
