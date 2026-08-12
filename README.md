@@ -112,6 +112,10 @@ Do not use this project to impersonate real people without consent. Users are re
 
 See [docs/roadmap.md](docs/roadmap.md).
 
+## Releases
+
+See [CHANGELOG.md](CHANGELOG.md) and [docs/release-checklist.md](docs/release-checklist.md).
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).

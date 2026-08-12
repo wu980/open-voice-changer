@@ -80,6 +80,13 @@
 - Add contributing guide
 - Clean development installation docs
 
+## v0.14 - Release Preparation
+
+- Add changelog
+- Add release checklist
+- Add pull request template
+- Add GitHub issue templates
+
 ## v1.0 - Stable Local Tool
 
 - Improve docs

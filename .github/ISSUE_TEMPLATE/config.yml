@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Model policy
+    url: https://github.com/wu980/open-voice-changer/blob/main/docs/model-policy.md
+    about: Read the model and consent policy before opening model-related issues.
