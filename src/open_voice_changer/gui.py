@@ -15,6 +15,7 @@ from open_voice_changer.config import (
 )
 from open_voice_changer.effects import preset_names
 from open_voice_changer.history import record_history
+from open_voice_changer.player import open_audio
 
 
 class VoiceChangerApp(ctk.CTk):
@@ -106,13 +107,30 @@ class VoiceChangerApp(ctk.CTk):
         self.progress_bar.set(0)
         self.progress_bar.grid(row=6, column=1, padx=8, pady=(20, 4), sticky="ew")
 
+        play_input_button = ctk.CTkButton(
+            self,
+            text="Play Input",
+            height=36,
+            command=self._play_input,
+        )
+        play_input_button.grid(row=7, column=1, padx=8, pady=(12, 4), sticky="ew")
+
+        self.play_output_button = ctk.CTkButton(
+            self,
+            text="Play Output",
+            height=36,
+            state="disabled",
+            command=self._play_output,
+        )
+        self.play_output_button.grid(row=7, column=2, padx=(8, 24), pady=(12, 4), sticky="ew")
+
         self.convert_button = ctk.CTkButton(
             self,
             text="Convert",
             height=40,
             command=self._convert,
         )
-        self.convert_button.grid(row=7, column=1, padx=8, pady=(12, 8), sticky="ew")
+        self.convert_button.grid(row=8, column=1, padx=8, pady=(8, 8), sticky="ew")
 
         self.open_output_button = ctk.CTkButton(
             self,
@@ -121,24 +139,24 @@ class VoiceChangerApp(ctk.CTk):
             state="disabled",
             command=self._open_output_location,
         )
-        self.open_output_button.grid(row=7, column=2, padx=(8, 24), pady=(12, 8), sticky="ew")
+        self.open_output_button.grid(row=8, column=2, padx=(8, 24), pady=(8, 8), sticky="ew")
 
         save_defaults_button = ctk.CTkButton(
             self,
             text="Save Defaults",
             command=self._save_defaults,
         )
-        save_defaults_button.grid(row=8, column=1, padx=8, pady=(8, 0), sticky="ew")
+        save_defaults_button.grid(row=9, column=1, padx=8, pady=(8, 0), sticky="ew")
 
         reset_defaults_button = ctk.CTkButton(
             self,
             text="Reset Defaults",
             command=self._reset_defaults,
         )
-        reset_defaults_button.grid(row=8, column=2, padx=(8, 24), pady=(8, 0), sticky="ew")
+        reset_defaults_button.grid(row=9, column=2, padx=(8, 24), pady=(8, 0), sticky="ew")
 
         status_label = ctk.CTkLabel(self, textvariable=self.status, text_color="gray")
-        status_label.grid(row=9, column=0, columnspan=3, padx=24, pady=(12, 24), sticky="w")
+        status_label.grid(row=10, column=0, columnspan=3, padx=24, pady=(12, 24), sticky="w")
 
     def _choose_input(self) -> None:
         if self.batch_mode.get():
@@ -191,11 +209,13 @@ class VoiceChangerApp(ctk.CTk):
             self.output_label.configure(text="Output folder")
             self.output_path.set(self.config.default_output_dir)
             self.open_output_button.configure(state="disabled")
+            self.play_output_button.configure(state="disabled")
         else:
             self.input_label.configure(text="Input audio")
             self.output_label.configure(text="Output file")
             self._refresh_single_output_path()
             self.open_output_button.configure(state="disabled")
+            self.play_output_button.configure(state="disabled")
 
     def _convert(self) -> None:
         input_file = self.input_path.get().strip()
@@ -238,6 +258,7 @@ class VoiceChangerApp(ctk.CTk):
                 self.progress_bar.set(1)
                 self.status.set(message)
                 self.open_output_button.configure(state="normal")
+                self.play_output_button.configure(state="disabled")
                 if result.failure_count:
                     failures = "\n".join(
                         f"- {item.input_path.name}: {item.error}" for item in result.failed[:5]
@@ -272,6 +293,7 @@ class VoiceChangerApp(ctk.CTk):
         self.progress_bar.set(1)
         self.status.set(f"Saved: {result}")
         self.open_output_button.configure(state="normal")
+        self.play_output_button.configure(state="normal")
         messagebox.showinfo("Done", f"Saved converted audio:\n{result}")
 
     def _show_batch_progress(self, index: int, total: int, result) -> None:
@@ -295,6 +317,32 @@ class VoiceChangerApp(ctk.CTk):
         folder = target if target.is_dir() else target.parent
         folder.mkdir(parents=True, exist_ok=True)
         os.startfile(folder)
+
+    def _play_input(self) -> None:
+        input_file = self.input_path.get().strip()
+        if not input_file:
+            messagebox.showerror("Missing input", "Please choose an input audio file.")
+            return
+        if self.batch_mode.get():
+            messagebox.showerror("Batch mode", "Choose single-file mode to play input audio.")
+            return
+
+        try:
+            open_audio(input_file)
+            self.status.set(f"Playing input: {Path(input_file).name}")
+        except Exception as exc:
+            messagebox.showerror("Play input failed", str(exc))
+
+    def _play_output(self) -> None:
+        if self.last_output_path is None or self.last_output_path.is_dir():
+            messagebox.showerror("Missing output", "Convert a single audio file before playback.")
+            return
+
+        try:
+            open_audio(self.last_output_path)
+            self.status.set(f"Playing output: {self.last_output_path.name}")
+        except Exception as exc:
+            messagebox.showerror("Play output failed", str(exc))
 
     def _refresh_single_output_path(self) -> None:
         if self.batch_mode.get():

@@ -55,6 +55,12 @@
 - Report success and failure counts
 - Show failed files in the desktop interface
 
+## v0.10 - Audio Playback
+
+- Add `ovc play`
+- Add desktop `Play Input`
+- Add desktop `Play Output`
+
 ## v1.0 - Stable Local Tool
 
 - Improve docs

@@ -16,6 +16,7 @@ from open_voice_changer.config import (
 from open_voice_changer.demo import create_demo_outputs
 from open_voice_changer.effects import preset_names
 from open_voice_changer.history import read_history, record_history
+from open_voice_changer.player import open_audio
 
 
 @click.group()
@@ -205,6 +206,17 @@ def history(limit: int) -> None:
             f"{entry.created_at} | {entry.mode} | preset={entry.preset} | "
             f"semitones={entry.semitones:g} | {entry.output_path}"
         )
+
+
+@main.command("play")
+@click.argument(
+    "audio_file",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+)
+def play(audio_file: Path) -> None:
+    """Open an audio file in the system player."""
+    result = open_audio(audio_file)
+    click.echo(f"Opened audio: {result}")
 
 
 @main.group("config")

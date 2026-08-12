@@ -62,6 +62,7 @@ ovc shift input.wav outputs\voice-high.wav --semitones 4 --preset bright
 ovc shift input.wav
 ovc shift input.wav outputs\voice-low.wav --semitones -3 --preset deep
 ovc batch samples outputs --semitones 4 --preset radio
+ovc play outputs\voice-low.wav
 ovc history
 ```
 
@@ -70,6 +71,8 @@ ovc history
 When `ovc shift` is run without an output file, it uses your saved defaults and creates a filename that includes the preset and semitone value.
 
 Batch conversion continues when one file fails and prints a final success/failure summary.
+
+The desktop interface includes `Play Input` and `Play Output` buttons for quick listening.
 
 Supported batch input formats:
 
